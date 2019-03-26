@@ -3600,8 +3600,6 @@ evhttp_handle_request(struct evhttp_request *req, void *arg)
 	/* we have a new request on which the user needs to take action */
 	req->userdone = 0;
 
-	bufferevent_disable(req->evcon->bufev, EV_READ);
-
 	if (req->type == 0 || req->uri == NULL) {
 		evhttp_send_error(req, req->response_code, NULL);
 		return;
@@ -3622,12 +3620,14 @@ evhttp_handle_request(struct evhttp_request *req, void *arg)
 
 	if ((cb = evhttp_dispatch_callback(&http->callbacks, req)) != NULL) {
 		(*cb->cb)(req, cb->cbarg);
+                bufferevent_disable(req->evcon->bufev, EV_READ);
 		return;
 	}
 
 	/* Generic call back */
 	if (http->gencb) {
 		(*http->gencb)(req, http->gencbarg);
+                bufferevent_disable(req->evcon->bufev, EV_READ);
 		return;
 	} else {
 		/* We need to send a 404 here */
